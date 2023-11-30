@@ -35,7 +35,6 @@
 
 - name: Configure VIP
   when: f5_vs_sitename not in (bigip_facts.ansible_net_virtual_servers | map(attribute='name') | list)
-  #when: f5_vs_sitename not in (bigip_facts.ansible_net_virtual_servers | map(attribute='name') | list) and f5_vs_dest_ip not in (bigip_facts.ansible_net_virtual_servers | map(attribute='destination_address') | list) 
   delegate_to: localhost
   bigip_virtual_server:
     provider: "{{ f5_local_provider }}"
