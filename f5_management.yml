@@ -1,0 +1,7 @@
+#NEED A HANDLER OR SOMETHING TO REFRESH DATA WHEN CHAGNES ARE MADE
+- hosts: "F5"
+  gather_facts: True
+  connection: local
+  roles:
+    - role: f5_management
+
