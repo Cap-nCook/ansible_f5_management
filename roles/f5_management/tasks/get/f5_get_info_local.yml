@@ -68,21 +68,13 @@
   tags:
     - always
 
-#- name: SetFacts if Found in Redis
-#  when: redis_key_output.results[0].msg.ansible_net_devices is defined
-#  set_fact:
-#    bigip_facts: "{{ redis_key_output.results[0].msg }}"
-#  tags:
-#    - always
-#
-#- name: DEBUG BigIP_Facts from REDIS
-#  when: bigip_facts is defined
-#  debug:
-#    msg: 
-#      - "{{ bigip_facts.ansible_net_devices }}"
-#  tags:
-#    - debug
-#    - debug_redis
-#    - never
+- name: Output F5 Facts to File
+  copy:
+    content: "{{ bigip_facts }}"
+    dest: "/tmp/{{ inventory_hostname }}_f5_vs_config.yml"
+  tags:
+    - never
+    - output_facts
+
 
 
