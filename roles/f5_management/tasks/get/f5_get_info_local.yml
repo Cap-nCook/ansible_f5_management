@@ -20,7 +20,6 @@
 
 - name: Get F5 Current Info and Store in Redis if not present
   when: redis_key_output.results[0].msg.ansible_net_devices is undefined or flush_f5_data
-  #when: bigip_facts.ansible_net_devices is undefined or flush_f5_data
   bigip_device_info:
     gather_subset:
       - virtual-servers
@@ -47,7 +46,7 @@
     - always
 
 - name: Setting Active F5 Node
-  when: redis_find_active_f5.failover_state != 'active'
+  when: redis_find_active_f5.failover_state == 'active'
   set_fact:
     active_f5: "{{ redis_find_active_f5.name }}"
   loop: "{{ redis_key_output.results[0].msg.ansible_net_devices }}"
