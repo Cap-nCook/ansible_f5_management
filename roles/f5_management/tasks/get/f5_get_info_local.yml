@@ -69,8 +69,9 @@
     - always
 
 - name: Output F5 Facts to File
+  when: bigip_facts is defined
   copy:
-    content: "{{ bigip_facts }}"
+    content: "{{ bigip_facts | to_yaml }} "
     dest: "/tmp/{{ inventory_hostname }}_f5_vs_config.yml"
   tags:
     - never
