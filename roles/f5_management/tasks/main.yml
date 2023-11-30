@@ -1,0 +1,52 @@
+---
+# tasks file for F5_Management
+- name: Setup flush_f5_data
+  when: flush_f5_data is undefined
+  set_fact: 
+    flush_f5_data: True
+  tags:
+    - always
+
+- name: Get F5 Info (Optional Report)
+  include_tasks:
+    file: get/f5_get_info_local.yml
+    apply:
+      tags: never
+  tags:
+    - always
+
+#- name: Set BigIPFacts from Redis about F5
+#  when: "'F5' not in group_names"
+#  include_tasks:
+#    file: get/f5_get_info_redis.yml
+#    apply:
+#      tags: never
+#  tags:
+#    - always
+#
+#- name: Get Data From BigIPFacts from Redis about F5
+#  when: "'F5' not in group_names"
+#  include_tasks:
+#    file: get/f5_get_info_config.yml
+#    apply:
+#      tags: never
+#  tags:
+#    - get_data
+
+
+#This task will only run when data can be found for all affected F5s and when the active F5 can be determined so that all actions are perfomed only on of the two F5s and always on the one that is currently active.
+- name: Run F5 tasks if BigIP Facts exist and only on Active F5 
+  when: "bigip_facts is defined and active_f5 is defined and inventory_hostname == active_f5"
+  vars:
+    f5_vs_data: "{{ hostvars[inventory_hostname][vs_name] }}"
+    f5_vs_data_irules: "{{ hostvars[inventory_hostname][vs_name]['irules'] | default('')}}"
+    f5_vs_data_pools: "{{ hostvars[inventory_hostname][vs_name]['pools'] }}"
+    f5_vs_fdnq: "{{ f5_config_settings['domain'][f5_vs_data['domain']][dms_env] }}"
+    f5_vs_port: "{{ f5_vs_data['destination_port'][dms_env] }}"
+    f5_vs_sitename: "{{ f5_vs_data['legacy_name'][dms_env] | default(f5_vs_data['site_hostname']+'.'+f5_vs_fdnq+'_'+f5_vs_port+'_vs') }}"
+  include_tasks:
+    file: f5_functions_main.yml
+    apply:
+      tags: never
+  tags:
+    - always

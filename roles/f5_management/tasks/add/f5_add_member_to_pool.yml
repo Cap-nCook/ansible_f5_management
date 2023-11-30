@@ -1,0 +1,73 @@
+---
+#- name: Create Pool for App on F5
+#  when: dms_env in f5_pool_env_check and f5_pool_name not in (bigip_facts.ansible_net_ltm_pools | map(attribute='name') | list)
+#  delegate_to: localhost
+#  vars:
+#    f5_pool_env_check: "{{ f5_app_pools[current_app_pool].sites }}"
+#    f5_pool_node_label: "{{ f5_app_pools[current_app_pool].node_label | default('') }}"
+#    f5_pool_port_label: "{{ f5_app_pools[current_app_pool].pool_label_port | default('') }}"
+#    f5_pool_name: "{{ f5_app_pools[current_app_pool].name }}{{f5_pool_node_label}}_{{f5_pool_port_label}}_pool"
+#    f5_pool_monitor: "{{ f5_app_pools[current_app_pool].monitor | default('http') }}"
+#    f5_pool_description: "{{ f5_app_pools[current_app_pool].desc | default('Pool for '+f5_vs_sitename) }}"
+#  bigip_pool:
+#    provider: "{{ f5_local_provider }}"
+#    state: present
+#    partition: Common
+#    name: "{{ f5_pool_name }}"
+#    monitors: "{{ f5_pool_monitor }}"
+#    description: "{{ f5_pool_description }}"
+#    lb_method: least-connections-member
+#  loop: "{{ f5_app_pools | list }}"
+#  loop_control:
+#    loop_var: current_app_pool
+#  tags:
+#    - f5_create_vs
+#    - f5_create_pool
+#
+#
+
+- name: Set F5 Pool Name Member is Being Added to
+  debug:
+    msg:
+     - "{{f5_pool_env_check }}"
+     - "{{f5_pool_node_label }}"
+     - "{{f5_pool_port_label }}"
+     - "{{f5_pool_name }}"
+     - "{{f5_pool_service_port }}"
+  tags:
+    - f5_create_vs
+    - f5_create_pool
+    - f5_add_pool_members
+
+- name: DEBUG Set F5 Pool Name Member is Being Added to
+  debug:
+    msg:
+      - "{{ f5_pool_name }}"
+      - "{{ hostvars[item.0].vm_name }}"
+      - "{{ item.1 }}"
+  loop: "{{ groups[f5_pool_inv_group] | product(f5_pool_service_port) | list}}"
+  tags:
+    - f5_create_vs
+    - f5_create_pool
+    - f5_add_pool_members
+
+- name: Add App Node Members to "{{ f5_pool_name }}" on F5
+  when: member_name + ':' + (service_port | string) not in (bigip_facts.ansible_net_ltm_pools | string)
+  delegate_to: localhost
+  vars:
+    member_name: "{{ hostvars[item.0].vm_name }}"
+    member_ip: "{{ hostvars[item.0].vm_ipaddress }}"
+    service_port: "{{ item.1 }}"
+  bigip_pool_member:
+    provider: "{{ f5_local_provider }}"
+    state: present
+    pool: "{{ f5_pool_name }}"
+    name: "{{ member_name }}"
+    host: "{{ member_ip }}"
+    port: "{{ service_port }}"
+  loop: "{{ groups[f5_pool_inv_group] | product(f5_pool_service_port) | list}}"
+  tags:
+    - f5_create_vs
+    - f5_create_pool
+    - f5_add_pool_members
+

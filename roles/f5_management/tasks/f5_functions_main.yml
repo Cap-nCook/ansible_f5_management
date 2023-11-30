@@ -1,0 +1,87 @@
+---
+
+- name: Running Tasks as Requested
+  debug:
+    msg: "Will run all tasks based on group_name and tags applied"
+  tags:
+    - always
+
+
+- name: Debug Vars
+  debug:
+    msg: "{{ f5_vs_data }}"
+  tags:
+    - debug_vars
+
+
+#Create Tasks
+- name: Create Nodes
+  when: dms_env in f5_pool_env_check and f5_pool_inv_group | length > 0 
+  vars:
+    f5_pool_env_check: "{{ f5_vs_data_pools[current_pool]['sites'] }}"
+    f5_pool_inv_group: "{{ f5_vs_data_pools[current_pool]['inv_group'] }}"
+  include_tasks:
+    file: create/f5_create_nodes.yml
+  loop: "{{ f5_vs_data_pools | list }}"
+  loop_control:
+    loop_var: current_pool
+  tags:
+    - f5_create_nodes
+    - f5_create_vs
+
+- name: Create Pool
+  include_tasks:
+    file: create/f5_create_pool.yml
+  tags:
+    - f5_create_pool
+    - f5_create_vs
+
+- name: Create IRule
+  include_tasks:
+    file: create/f5_create_irule.yml
+  tags:
+    - f5_create_irule
+    - f5_create_vs
+
+#Add Tasks
+- name: Add Nodes as Pool Members to Pool on F5
+  when: dms_env in f5_pool_env_check
+  vars:
+    f5_pool_env_check: "{{ f5_vs_data_pools[current_pool]['sites'] }}"
+    f5_pool_node_label: "{{ f5_vs_data_pools[current_pool]['node_label'] | default('') }}"
+    f5_pool_port_label: "{{ f5_vs_data_pools[current_pool]['pool_label_port'] | default('') }}"
+    f5_pool_name: "{{ f5_vs_data_pools[current_pool]['legacy_name'][dms_env] | default(f5_vs_data_pools[current_pool]['name']+f5_pool_node_label+'_'+f5_pool_port_label+'_pool') }}"
+    f5_pool_service_port: "{{ f5_vs_data_pools[current_pool]['service_port'] }}"
+    f5_pool_inv_group: "{{ f5_vs_data_pools[current_pool]['inv_group'] }}"
+  include_tasks:
+    file: add/f5_add_member_to_pool.yml
+  loop: "{{ f5_vs_data_pools | list }}"
+  loop_control:
+    loop_var: current_pool
+  tags:
+    - f5_create_pool
+    - f5_add_pool_members
+    - f5_create_vs
+
+
+- name: Create VS via App Definition
+  vars:
+    f5_vs_description: "{{ f5_vs_data['description']  | default('') }}"
+    f5_vs_dest_ip: "{{ f5_vs_data['destination_address'][dms_env] }}"
+    f5_vs_profiles: "{{ f5_config_settings['profiles'][f5_vs_data['profiles']] }}"
+    f5_vs_irules: "{{ f5_vs_data_irules | list }}"
+    f5_vs_pool: "{{ f5_vs_pool_default_name | default('') }}"
+    f5_vs_snat: "{{ f5_vs_data['snat'] | default('Automap') }}"
+    f5_vs_persistance_profile: "{{ f5_vs_data['persistance_profile'] | default('') }}"
+  include_tasks:
+    file: create/f5_create_vs_by_app.yml
+  tags:
+    - f5_create_vs
+
+
+  #- name: Update VIP
+
+  #- name: Update Pool
+
+  #- name: Update IRule
+

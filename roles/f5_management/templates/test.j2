@@ -1,0 +1,10 @@
+{% for profile in list_of_data %}
+{{ profile }}
+START
+{% for setting in profile %}  
+{% set current_setting = setting.context+':'+setting.full_path+':'+setting.name %}
+{{ current_setting }}
+{% endfor %}
+END
+{% endfor %}
+

@@ -1,0 +1,56 @@
+---
+
+- name: Set_Fact for Default Pool Name Generated
+  when: f5_vs_data_pools['default_pool'] is defined  and dms_env in f5_pool_env_check
+  vars:
+    f5_pool_env_check: "{{ f5_vs_data_pools['default_pool'].sites }}"
+    f5_pool_node_label: "{{ f5_vs_data_pools['default_pool'].node_label | default('') }}"
+    f5_pool_port_label: "{{ f5_vs_data_pools['default_pool'].pool_label_port | default('') }}"
+    f5_pool_port_name: "{{ f5_vs_data_pools['default_pool'].name | default('') }}"
+  set_fact:
+    f5_vs_default_pool_name: "{{ f5_vs_data_pools['default_pool']['legacy_name'][dms_env] | default(f5_pool_port_name+f5_pool_node_label+'_'+f5_pool_port_label+'_pool') }}"
+  tags:
+    - f5_create_vs
+
+- name: Create iRule list for VS
+  when: dms_env in f5_irule_env_check
+  vars:
+    f5_irule_env_check: "{{ f5_vs_data_irules[current_irule]['sites'] }}"
+    f5_irule_name: "{{ f5_vs_data_irules[current_irule]['legacy_name'][dms_env] | default(f5_vs_data_irules[current_irule]['name']) }}"
+  set_fact:
+    f5_irules_list: "{{ f5_irules_list | default([]) + [f5_irule_name] }}" 
+  loop: "{{ f5_vs_data_irules | list }}"
+  loop_control:
+    loop_var: current_irule
+  tags:
+    - f5_create_vs
+
+- name: Debug Vars
+  debug:
+    msg: 
+      - "{{f5_irules_list}}"
+      - "{{f5_vs_default_pool_name}}"
+  tags:
+    - debug_vars
+
+- name: Configure VIP
+  when: f5_vs_sitename not in (bigip_facts.ansible_net_virtual_servers | map(attribute='name') | list)
+  #when: f5_vs_sitename not in (bigip_facts.ansible_net_virtual_servers | map(attribute='name') | list) and f5_vs_dest_ip not in (bigip_facts.ansible_net_virtual_servers | map(attribute='destination_address') | list) 
+  delegate_to: localhost
+  bigip_virtual_server:
+    provider: "{{ f5_local_provider }}"
+    state: present
+    partition: Common
+    name: "{{ f5_vs_sitename }}"
+    destination: "{{ f5_vs_dest_ip }}"
+    port: "{{ f5_vs_port }}"
+    pool: "{{ f5_vs_default_pool_name | default('') }}"
+    snat: "{{ f5_vs_snat }}"
+    description: "{{ f5_vs_description }}"
+    profiles: "{{ f5_vs_profiles }}"
+    default_persistence_profile: "{{ f5_vs_persistance_profile }}"
+    irules: "{{ f5_irules_list }}"
+  tags:
+    - f5_create_vs
+
+

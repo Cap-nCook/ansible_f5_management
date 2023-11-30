@@ -1,0 +1,88 @@
+---
+#Task to get info from F5
+
+- name: Include Redis Role 
+  include_role:
+    name: redis 
+  vars:
+    redis_lookup: 
+      - "{{ inventory_hostname }}"
+  tags:
+    - always
+
+- name: DEBUG F5 REDIS
+  debug:
+    msg: "{{ redis_key_output.results }}"
+  tags:
+    - debug
+    - debug_redis
+    - never
+
+- name: Get F5 Current Info and Store in Redis if not present
+  when: redis_key_output.results[0].msg.ansible_net_devices is undefined or flush_f5_data
+  #when: bigip_facts.ansible_net_devices is undefined or flush_f5_data
+  bigip_device_info:
+    gather_subset:
+      - virtual-servers
+      - ltm-pools
+      - nodes
+      - irules
+      - devices
+      - device-groups
+    provider: "{{ f5_local_provider }}"
+  register: bigip_facts_from_f5
+#  no_log: true
+  delegate_to: localhost
+  tags:
+    - always
+
+- name: Include Redis Role 
+  when: redis_key_output.results[0].msg.ansible_net_devices is undefined or flush_f5_data
+  include_role:
+    name: redis 
+  vars:
+    redis_lookup: 
+      - "{{ inventory_hostname }}"
+  tags:
+    - always
+
+- name: Setting Active F5 Node
+  when: redis_find_active_f5.failover_state != 'active'
+  set_fact:
+    active_f5: "{{ redis_find_active_f5.name }}"
+  loop: "{{ redis_key_output.results[0].msg.ansible_net_devices }}"
+  loop_control:
+    loop_var: redis_find_active_f5
+  no_log: true
+  tags:
+    - always
+
+- name: Setting which F5 Cache facts to use based on Active F5 Node
+  when: redis_store_active_f5.redis_output == active_f5
+  set_fact:
+    bigip_facts: "{{ redis_store_active_f5.msg }}"
+  loop: "{{ redis_key_output.results }}"
+  loop_control:
+    loop_var: redis_store_active_f5
+  no_log: true
+  tags:
+    - always
+
+#- name: SetFacts if Found in Redis
+#  when: redis_key_output.results[0].msg.ansible_net_devices is defined
+#  set_fact:
+#    bigip_facts: "{{ redis_key_output.results[0].msg }}"
+#  tags:
+#    - always
+#
+#- name: DEBUG BigIP_Facts from REDIS
+#  when: bigip_facts is defined
+#  debug:
+#    msg: 
+#      - "{{ bigip_facts.ansible_net_devices }}"
+#  tags:
+#    - debug
+#    - debug_redis
+#    - never
+
+

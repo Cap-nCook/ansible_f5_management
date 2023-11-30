@@ -1,0 +1,15 @@
+---
+# vars file for F5_Management
+f5_local_provider:
+  no_f5_teem: "{{ F5_teem | default(False) }}"
+  server: "{{ inventory_hostname if 'F5' in group_names else active_f5 }}"
+  user: "{{ F5_user }}"
+  password: "{{ F5_password }}"
+  validate_certs: "{{ F5_validate_certs }}"
+  server_port: "{{ F5_server_port }}"
+f5_httpapi_provider:
+  no_f5_teem: "{{ F5_teem | default(False) }}"
+  server: "{{ inventory_hostname if 'F5' in group_names else active_f5 }}"
+  user: "{{ F5_user }}"
+  password: "{{ F5_password }}"
+  validate_certs: "{{ F5_validate_certs }}"

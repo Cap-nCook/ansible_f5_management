@@ -1,0 +1,22 @@
+---
+
+- name: Create iRule for App on F5
+  when: dms_env in f5_irule_env_check and f5_vs_data_irules is defined and f5_irule_name not in (bigip_facts.ansible_net_irules | map(attribute='name') | list)
+  delegate_to: localhost
+  vars:
+    f5_irule_env_check: "{{ f5_vs_data_irules[current_irule]['sites'] }}"
+    f5_irule_name: "{{ f5_vs_data_irules[current_irule]['legacy_name'][dms_env] | default(f5_vs_data_irules[current_irule]['name']) }}"
+    f5_irule_template: "{{ f5_vs_data_irules[current_irule]['template'] }}"
+  bigip_irule:
+    provider: "{{ f5_local_provider }}"
+    state: present
+    name: "{{ f5_irule_name }}"
+    src: "{{ f5_irule_repo_local }}/{{ vs_name }}/{{ f5_irule_template }}"
+    module: ltm
+  loop: "{{ f5_vs_data_irules | list }}"  
+  loop_control:
+    loop_var: current_irule
+  tags:
+    - f5_create_vs
+    - f5_create_irule
+

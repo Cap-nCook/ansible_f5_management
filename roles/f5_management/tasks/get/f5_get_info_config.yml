@@ -1,0 +1,63 @@
+---
+#Task to get info from F5
+
+- name: Include Redis Role 
+  include_role:
+    name: redis 
+  vars:
+    redis_lookup: "{{ groups['F5'] }}"
+  tags:
+    - always
+
+- name: Setting Active F5 Node
+  when: redis_find_active_f5.failover_state == 'active' 
+  set_fact:
+    active_f5: "{{ redis_find_active_f5.name }}"
+  loop: "{{ redis_key_output.results[0].msg.ansible_net_devices }}"
+  loop_control:
+    loop_var: redis_find_active_f5
+  no_log: true
+  tags:
+    - always
+
+- name: Setting which F5 Cache facts to use based on Active F5 Node
+  when: redis_store_active_f5.redis_output == active_f5
+  set_fact:
+    bigip_facts: "{{ redis_store_active_f5.msg }}"
+  loop: "{{ redis_key_output.results }}"
+  loop_control:
+    loop_var: redis_store_active_f5
+  no_log: true
+  tags:
+    - always
+
+- name: DEUBG BIGIP FACTS FOR APP NODE
+  when: search_f5.profiles is defined 
+  set_fact:
+    list_of_data: "{{ list_of_data | default([]) + [search_f5.profiles]  }}"
+  loop: "{{ bigip_facts.ansible_net_virtual_servers }}"
+  loop_control:
+    loop_var: search_f5
+  no_log: True
+  tags:
+    - debug_search
+
+- name: DEUBG BIGIP FACTS FOR APP NODE UNIQUE
+  set_fact:
+    unique_list_of_data: "{{ unique_list_of_data | default([]) + [unique_list]  }}"
+  loop: "{{ list_of_data | unique }}"
+  loop_control:
+    loop_var: unique_list
+  no_log: True
+  tags:
+    - debug_search
+
+- name: DEBUG HOPE THIS WORKS
+  template:
+    src: test.j2
+    dest: /etc/ansible/testing_jinja
+  delegate_to: localhost 
+  tags:
+    - debug_search
+
+

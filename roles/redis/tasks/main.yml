@@ -1,0 +1,20 @@
+---
+# tasks file for redis
+
+
+- name: Query Redis Key
+  debug:
+    msg: "{{ lookup('redis', 'af_' + redis_output) }}"
+  loop: "{{ redis_lookup }}"
+  loop_control:
+    loop_var: redis_output      
+  no_log: true
+  register: redis_key_output
+  tags:
+    - always
+
+
+
+
+
+

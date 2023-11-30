@@ -1,0 +1,22 @@
+- hosts: f5_config 
+  gather_facts: false
+  connection: local
+    
+  tasks:
+
+    - name: Update F5 VS pool member
+      bigip_irule:
+        name: bmwpass.arkona.com_443_irule
+        src: test_irule.tcl
+        module: ltm
+        provider:
+          server: "{{ inventory_hostname }}"
+          user: "{{ user }}"
+          password: "{{ password }}"
+          validate_certs: "{{ validate_certs }}"
+      delegate_to: localhost
+      register: bigip_output
+    
+    - name: bigip_output OUTPUT
+      debug:
+        msg: "{{ bigip_output | to_nice_json}}"
