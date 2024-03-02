@@ -18,8 +18,8 @@
 - name: Create Nodes
   when: dms_env in f5_pool_env_check and f5_pool_inv_group | length > 0 
   vars:
-    f5_pool_env_check: "{{ f5_vs_data_pools[current_pool]['sites'] }}"
-    f5_pool_inv_group: "{{ f5_vs_data_pools[current_pool]['inv_group'] }}"
+    f5_pool_env_check: "{{ f5_vs_data_pools[current_pool]['sites'] | default('') }}"
+    f5_pool_inv_group: "{{ f5_vs_data_pools[current_pool]['inv_group'][dms_env] | default('')}}"
   include_tasks:
     file: create/f5_create_nodes.yml
   loop: "{{ f5_vs_data_pools | list }}"
@@ -52,7 +52,7 @@
     f5_pool_port_label: "{{ f5_vs_data_pools[current_pool]['pool_label_port'] | default('') }}"
     f5_pool_name: "{{ f5_vs_data_pools[current_pool]['legacy_name'][dms_env] | default(f5_vs_data_pools[current_pool]['name']+f5_pool_node_label+'_'+f5_pool_port_label+'_pool') }}"
     f5_pool_service_port: "{{ f5_vs_data_pools[current_pool]['service_port'] }}"
-    f5_pool_inv_group: "{{ f5_vs_data_pools[current_pool]['inv_group'] }}"
+    f5_pool_inv_group: "{{ f5_vs_data_pools[current_pool]['inv_group'][dms_env] }}"
   include_tasks:
     file: add/f5_add_member_to_pool.yml
   loop: "{{ f5_vs_data_pools | list }}"
@@ -68,7 +68,7 @@
   vars:
     f5_vs_description: "{{ f5_vs_data['description']  | default('') }}"
     f5_vs_dest_ip: "{{ f5_vs_data['destination_address'][dms_env] }}"
-    f5_vs_profiles: "{{ f5_config_settings['profiles'][f5_vs_data['profiles']] }}"
+    f5_vs_profiles: "{{ f5_config_settings['profiles'][f5_vs_data['profiles'][dms_env]] }}"
     f5_vs_irules: "{{ f5_vs_data_irules | list }}"
     f5_vs_pool: "{{ f5_vs_pool_default_name | default('') }}"
     f5_vs_snat: "{{ f5_vs_data['snat'] | default('Automap') }}"

@@ -3,7 +3,7 @@
 - name: Setup flush_f5_data
   when: flush_f5_data is undefined
   set_fact: 
-    flush_f5_data: True
+    flush_f5_data: False
   tags:
     - always
 
@@ -14,6 +14,25 @@
       tags: never
   tags:
     - always
+
+#- name: Set BigIPFacts from Redis about F5
+#  when: "'F5' not in group_names"
+#  include_tasks:
+#    file: get/f5_get_info_redis.yml
+#    apply:
+#      tags: never
+#  tags:
+#    - always
+#
+#- name: Get Data From BigIPFacts from Redis about F5
+#  when: "'F5' not in group_names"
+#  include_tasks:
+#    file: get/f5_get_info_config.yml
+#    apply:
+#      tags: never
+#  tags:
+#    - get_data
+
 
 #This task will only run when data can be found for all affected F5s and when the active F5 can be determined so that all actions are perfomed only on of the two F5s and always on the one that is currently active.
 - name: Run F5 tasks if BigIP Facts exist and only on Active F5 

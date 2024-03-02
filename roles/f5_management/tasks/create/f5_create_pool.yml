@@ -1,9 +1,9 @@
 ---
 - name: Create Pool for App on F5
-  when: dms_env in f5_pool_env_check and f5_pool_name not in (bigip_facts.ansible_net_ltm_pools | map(attribute='name') | list)
+  when: current_pool != 'default_pool' and dms_env in f5_pool_env_check and f5_pool_name not in (bigip_facts.ansible_net_ltm_pools | map(attribute='name') | list)
   delegate_to: localhost
   vars:
-    f5_pool_env_check: "{{ f5_vs_data_pools[current_pool].sites }}"
+    f5_pool_env_check: "{{ f5_vs_data_pools[current_pool].sites | default('') }}"
     f5_pool_node_label: "{{ f5_vs_data_pools[current_pool].node_label | default('') }}"
     f5_pool_port_label: "{{ f5_vs_data_pools[current_pool].pool_label_port | default('') }}"
     f5_pool_name: "{{ f5_vs_data_pools[current_pool]['legacy_name'][dms_env] | default(f5_vs_data_pools[current_pool].name+f5_pool_node_label+'_'+f5_pool_port_label+'_pool') }}"
