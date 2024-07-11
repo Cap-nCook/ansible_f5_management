@@ -1,14 +1,16 @@
 ---
 
 - name: Create New Nodes on F5
-  when: hostvars[node].vm_name not in (bigip_facts.ansible_net_nodes | map(attribute='name') | list)
+  when: node_name not in (bigip_facts.ansible_net_nodes | map(attribute='name') | list)
   delegate_to: localhost
   vars:
     app_node_list: "{{ groups[f5_pool_inv_group] }}"
+    node_name: "{{ node | regex_search('^([^.]+)') }}"
+    node_ip: "{{ hostvars[node].vm_ipaddress | default(hostvars[node]['ip_address'][env])}}"
   bigip_node:
     provider: "{{ f5_local_provider }}"
-    host: "{{hostvars[node].vm_ipaddress}}"
-    name: "{{hostvars[node].vm_name}}"
+    host: "{{node_ip}}"
+    name: "{{node_name}}"
     state: present
   loop: "{{ app_node_list }}"
   loop_control:

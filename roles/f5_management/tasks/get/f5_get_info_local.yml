@@ -12,7 +12,9 @@
 
 - name: DEBUG F5 REDIS
   debug:
-    msg: "{{ redis_key_output.results }}"
+    msg:
+      - "{{ redis_key_output.results }}"
+      - "{{ f5_local_provider }}"
   tags:
     - debug
     - debug_redis

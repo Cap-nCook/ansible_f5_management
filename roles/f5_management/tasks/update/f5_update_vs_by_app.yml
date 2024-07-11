@@ -11,7 +11,7 @@
   set_fact:
     f5_vs_default_pool_name: "{{ f5_vs_data['default_pool']['legacy_name'][dms_env] | default(f5_pool_name+f5_pool_node_label+'_'+f5_pool_port_label+'_pool') }}"
   tags:
-    - f5_create_vs
+    - f5_update_vs
 
 - name: Create iRule list for VS
   when: dms_env in f5_irule_env_check
@@ -24,7 +24,7 @@
   loop_control:
     loop_var: current_irule
   tags:
-    - f5_create_vs
+    - f5_update_vs
 
 - name: Debug Vars
   debug:
@@ -35,7 +35,7 @@
     - debug_vars
 
 - name: Configure VIP
-  when: f5_vs_sitename not in (bigip_facts.ansible_net_virtual_servers | map(attribute='name') | list)
+  when: f5_vs_sitename is in (bigip_facts.ansible_net_virtual_servers | map(attribute='name') | list)
   #when: f5_vs_sitename not in (bigip_facts.ansible_net_virtual_servers | map(attribute='name') | list) and f5_vs_dest_ip not in (bigip_facts.ansible_net_virtual_servers | map(attribute='destination_address') | list) 
   delegate_to: localhost
   bigip_virtual_server:
@@ -52,7 +52,6 @@
     default_persistence_profile: "{{ f5_vs_persistence_profile }}"
     irules: "{{ f5_irules_list | default('') }}"
   tags:
-    - f5_create_vs
     - f5_update_vs
 
 

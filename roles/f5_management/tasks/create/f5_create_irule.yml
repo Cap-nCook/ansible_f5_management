@@ -7,11 +7,12 @@
     f5_irule_env_check: "{{ f5_vs_data_irules[current_irule]['sites'] }}"
     f5_irule_name: "{{ f5_vs_data_irules[current_irule]['legacy_name'][dms_env] | default(f5_vs_data_irules[current_irule]['name']) }}"
     f5_irule_template: "{{ f5_vs_data_irules[current_irule]['template'] }}"
+    template_path: "{{ f5_irule_repo_local }}/{{ f5_vs_data_irules[current_irule]['template'] }}"
   bigip_irule:
     provider: "{{ f5_local_provider }}"
     state: present
     name: "{{ f5_irule_name }}"
-    src: "{{ f5_irule_repo_local }}/{{ vs_name }}/{{ f5_irule_template }}"
+    content: "{{ lookup('template', template_path ) }}"
     module: ltm
   loop: "{{ f5_vs_data_irules | list }}"  
   loop_control:
