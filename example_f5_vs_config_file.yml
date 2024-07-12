@@ -7,7 +7,7 @@ f5_pool_labelB: "{{ f5_config_settings['pool_ha']['labelB'][env] | default('') }
 f5_pool_labelNP: "{{ f5_config_settings['pool_ha']['labelNP'][env] | default('') }}"
 
 #F5 irule repo location
-f5_irule_repo_local: /opt/repos/opensystems.f5-irules
+f5_irule_repo_local: /opt/repos/f5-irules
 
 
 f5_config_settings:
