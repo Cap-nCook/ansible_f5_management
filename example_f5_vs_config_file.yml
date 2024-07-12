@@ -1,0 +1,240 @@
+#site_prefix default
+f5_site_prefix:  "{{ f5_config_settings['site_prefix'][env] | default('') }}"
+
+#Pool defaults
+f5_pool_labelA: "{{ f5_config_settings['pool_ha']['labelA'][env] | default('') }}"
+f5_pool_labelB: "{{ f5_config_settings['pool_ha']['labelB'][env] | default('') }}"
+f5_pool_labelNP: "{{ f5_config_settings['pool_ha']['labelNP'][env] | default('') }}"
+
+#F5 irule repo location
+f5_irule_repo_local: /opt/repos/opensystems.f5-irules
+
+
+f5_config_settings:
+  site_prefix:
+    qa: qa-
+    pa: pa-
+    staging: stg-
+    test: test-
+  domain:
+    default:
+      qa: qaapp.somesite.com
+	  uat: othersite.com
+      prod: app.somesite.com
+    othersite.com:
+      qa: othersite.com
+      uat: othersite.com
+      prod: othersite.com
+  pool_monitors:
+  - http
+  pool_ha:
+    labelNP:
+      qa: _qa-nodes
+      staging: _stg-nodes
+      pa: _pa-nodes
+    labelA:
+      qa: _qa-nodes
+      staging: _stg-nodes
+      pa: _pa-nodes
+      prod: _a-nodes
+      uat: _a-nodes
+    labelB:
+      prod: _b-nodes
+      uat: _b-nodes
+  profiles:
+    default:
+    - name: http
+      context: all
+    - name: tcp
+      context: all
+      name: star.app.somesite.com
+    - context: all
+      name: tcp
+    default_x_forwarded_for_proto_somesite:
+    - name: http_x-forwarded-proto_and_enable_XFF
+      context: all
+    - name: star.app.somesite.com
+      context: client-side
+    - name: tcp
+      context: all
+    default_tcp:
+    - name: tcp
+      context: all
+    default_xforward:
+    - name: http_enable_X-Forwarded-For
+      context: all
+    - name: tcp
+      context: all
+
+api_443:
+  legacy_name:
+    prod: api.somesite.com_443_vs
+    pa: pa-api.somesite.com_443_vs
+    uat: api.somesite.com_443_vs
+    qa: qa-api.somesite.com_443_vs
+    staging: staging-api.somesite.com_443_vs
+  site_hostname: api
+  f5_domain: pub
+  domain: somesite.com
+  default_pool:
+    legacy_name: {}
+    pool_obj: {}
+  destination_address:
+    prod: 10.233.213.71
+    pa: 10.232.222.6
+    uat: 10.232.213.71
+    qa: 10.233.222.7
+    staging: 10.147.107.178
+  destination_port:
+    prod: 443
+    pa: 443
+    uat: 443
+    qa: 443
+    staging: 443
+  persistence_profile: {}
+  profiles:
+    prod: default_xforward
+    pa: default_xforward
+    uat: default_xforward
+    qa: default_xforward
+    staging: default_xforward
+  irules:
+    api.somesite.com:
+      name: api.somesite.com
+      template: api_443/api.somesite.com/api.somesite.com.tcl
+      sites:
+      - prod
+      - uat
+      - pa
+      - qa
+      - staging
+  pools:
+    service-reports_a-nodes_80_pool:
+      legacy_name:
+        prod: service-reports_a-nodes_80_pool
+        uat: service-reports_a-nodes_80_pool
+      name: service-reports
+      lb_method: least-connections-member
+      node_label: '{{ f5_pool_labelA }}'
+      port_label: "80"
+      service_port:
+      - 80
+      monitor:
+      - http
+      sites:
+      - prod
+      - uat
+      - pa
+      - qa
+      - staging
+      inv_group:
+        prod: service-reports-a
+        uat: service-reports-a
+        qa: service-reports
+        pa: service-reports
+        staging: service-reports
+    service-reports_b-nodes_80_pool:
+      legacy_name:
+        prod: service-reports_b-nodes_80_pool
+        uat: service-reports_b-nodes_80_pool
+      name: service-reports
+      lb_method: least-connections-member
+      node_label: '{{ f5_pool_labelB }}'
+      port_label: "80"
+      service_port:
+      - 80
+      monitor:
+      - http
+      sites:
+      - prod
+      - uat
+      inv_group:
+        prod: service-reports-b
+        uat: service-reports-b
+    service-onprem_a-nodes_80_pool:
+      legacy_name:
+        prod: service-onprem_a-nodes_80_pool
+        uat: service-onprem_a-nodes_80_pool
+      name: service-onprem
+      lb_method: least-connections-member
+      node_label: '{{ f5_pool_labelA }}'
+      port_label: "80"
+      service_port:
+      - 80
+      monitor:
+      - http
+      sites:
+      - prod
+      - uat
+      - pa
+      - qa
+      - staging
+      inv_group:
+        prod: service-onprem-a
+        uat: service-onprem-a
+        pa: service-onprem
+        qa: service-onprem
+        staging: service-onprem
+    service-onprem_b-nodes_80_pool:
+      legacy_name:
+        prod: service-onprem_b-nodes_80_pool
+        uat: service-onprem_b-nodes_80_pool
+      name: service-onprem
+      lb_method: least-connections-member
+      node_label: '{{ f5_pool_labelB }}'
+      port_label: "80"
+      service_port:
+      - 80
+      monitor:
+      - http
+      sites:
+      - prod
+      - uat
+      inv_group:
+        prod: service-onprem-b
+        uat: service-onprem-b
+    customer-api_a-nodes_80_pool:
+      legacy_name:
+        prod: customer-api_a-nodes_80_pool
+        uat: customer-api_a-nodes_80_pool
+      name: customer-api
+      lb_method: least-connections-member
+      node_label: '{{ f5_pool_labelA }}'
+      port_label: 80
+      service_port:
+      - 80
+      monitor:
+      - http
+      sites:
+      - prod
+      - uat
+      - pa
+      - qa
+      - staging
+      inv_group:
+        prod: customer-api-a
+        uat: customer-api-a
+        pa: customer-api
+        qa: customer-api
+        staging: customer-api
+    customer-api_b-nodes_80_pool:
+      legacy_name:
+        prod: customer-api_b-nodes_80_pool
+        uat: customer-api_b-nodes_80_pool
+      name: customer-api
+      lb_method: least-connections-member
+      node_label: '{{ f5_pool_labelB }}'
+      port_label: "80"
+      service_port:
+      - 80
+      monitor:
+      - http
+      sites:
+      - prod
+      - uat
+      inv_group:
+        prod: customer-api-b
+        uat: customer-api-b
+	  
+	  
+
